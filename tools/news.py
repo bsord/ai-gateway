@@ -15,7 +15,7 @@ class GetNewsTool(BaseTool):
         """Use the tool."""
         print('testing')
         result = requests.get("https://api.f5.news/posts/{subreddit}".format(subreddit = subreddit))
-        return f"Results: {result.status_code} - {result.text}"
+        return result.text
     
     async def _arun(self, subreddit: str) -> str:
         """Use the tool asynchronously."""
