@@ -1,19 +1,18 @@
-import openai
+from langchain.prompts import PromptTemplate
+from langchain.llms import OpenAI
+from langchain.chains import LLMChain
 
 def complete_prompt(prompt: str):
 
-    # define messages object to send to openAI
-    messages_to_openai = [
-        {"role": "system", "content": "you are a helpful ai assistant"}
-    ]
-    messages_to_openai.append(
-        {"role": "user", "content": prompt} 
+    # define the LLM of choice
+    llm = OpenAI(temperature=0.0)
+
+    prompt_template = PromptTemplate(
+        input_variables=["product"],
+        template="What is a good name for a company that makes {product}?",
     )
 
-    completion_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages_to_openai,
-        temperature=0.0
-    )
-
+    chain = LLMChain(llm=llm, prompt=prompt_template)
+    completion_response = chain.run("colorful socks")
+    
     return completion_response
