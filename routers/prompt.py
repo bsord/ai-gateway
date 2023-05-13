@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 
 import schemas
 from services.chat_completion import complete_prompt

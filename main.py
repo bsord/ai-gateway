@@ -1,13 +1,8 @@
-import settings
-settings.init()
-
-import os
-from typing import Union
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import prompt
+from routers import prompt, test
 
 # init fast api
 app = FastAPI()
@@ -32,6 +27,7 @@ app.add_middleware(
 )
 
 app.include_router(prompt.router) #/prompt/*
+app.include_router(test.router) #/prompt/*
 
 # root handler
 @app.get("/")

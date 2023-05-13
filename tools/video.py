@@ -2,25 +2,28 @@ import requests
 from typing import Optional, Type
 from pydantic import Field, BaseModel
 from langchain.tools import BaseTool
+from services.text_to_speech import get_audio
 
 import json
 import numpy as np
 import moviepy.editor as mp
 
 class MakeShortFormVideoSchema(BaseModel):
-    titles: list[str] = Field(description="array of strings that contains the news headlines")
+    titles: list[str] = Field(description="array of strings that contains 3 of the best news headlines")
     intro: str = Field(description="Intro text for the video")
     summary: str = Field(description="Text for outro slide thanking the viewer")
+    narration: str = Field(description="a short narrative script that explains the news headlines. it should also include the intro at the beginning and summary at the end")
 
 class MakeShortFormVideoTool(BaseTool):
     name = "make_short_form_video"
     description = "useful for when you need to make a short form video from news titles"
     args_schema: Type[MakeShortFormVideoSchema] = MakeShortFormVideoSchema
 
-    def _run(self, titles: list[str], intro: str, summary: str) -> str:
+    def _run(self, titles: list[str], intro: str, summary: str, narration: str) -> str:
         """Use the tool."""
+        
 
-        self.create_title_slides(titles, intro, summary)
+        self.create_title_slides(titles, intro, summary, narration)
         
         return titles
     
@@ -49,13 +52,16 @@ class MakeShortFormVideoTool(BaseTool):
         return gradient_clip
 
 
-    def create_title_slides(self, json_array, intro, summary):
+    def create_title_slides(self, json_array, intro, summary, narration):
+        # generate narration audio
+        narration_audio_file = get_audio(narration)
+
         # Set video dimensions
         video_width = 400
         video_height = 800
 
         # Set slide duration
-        slide_duration = 4  # Adjust as desired
+        slide_duration = 4.75  # Adjust as desired
         padding = 4
 
         # Create video clip
@@ -101,6 +107,11 @@ class MakeShortFormVideoTool(BaseTool):
 
         # Set the video output filename
         output_filename = 'title_slides_video.mp4'
+
+        # add narration audio
+        audioclip = mp.AudioFileClip(narration_audio_file)
+        compositeaudioclip = mp.CompositeAudioClip([audioclip])
+        final_clip.audio = compositeaudioclip
 
         # Write the video to a file
         final_clip.write_videofile(output_filename, codec='libx264', fps=30)
