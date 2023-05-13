@@ -6,10 +6,9 @@ from langchain.tools import BaseTool
 import json
 import numpy as np
 import moviepy.editor as mp
-from moviepy.video.tools.drawing import color_gradient
 
 class MakeShortFormVideoSchema(BaseModel):
-    titles: list[str] = Field(description="array of strings that contain the news headlines")
+    titles: list[str] = Field(description="array of strings that contains the news headlines")
     intro: str = Field(description="Intro text for the video")
     summary: str = Field(description="Text for outro slide thanking the viewer")
 
@@ -21,8 +20,6 @@ class MakeShortFormVideoTool(BaseTool):
     def _run(self, titles: list[str], intro: str, summary: str) -> str:
         """Use the tool."""
 
-        #list_of_titles = titles.strip('][').split(', ')
-        #list_of_titles = ['title 1', 'title 2', 'title 3']
         self.create_title_slides(titles, intro, summary)
         
         return titles
@@ -31,6 +28,25 @@ class MakeShortFormVideoTool(BaseTool):
         """Use the tool asynchronously."""
         raise NotImplementedError("make short form video does not support async")
     
+    def generate_gradient_background(self, width, height, duration):
+
+        # Define the start and end colors of the gradient
+        start_color = (255, 0, 0)  # Red
+        end_color = (0, 0, 255)  # Blue
+
+        # Generate the gradient array
+        gradient = np.zeros((height, width, 3), dtype=np.uint8)
+        for y in range(height):
+            for x in range(width):
+                gradient[y, x] = [
+                    int(start_color[c] * (1 - x / width) + end_color[c] * (x / width))
+                    for c in range(3)
+                ]
+
+        # Create a gradient image clip
+        gradient_clip = mp.ImageClip(gradient, duration=duration)
+
+        return gradient_clip
 
 
     def create_title_slides(self, json_array, intro, summary):
@@ -54,6 +70,9 @@ class MakeShortFormVideoTool(BaseTool):
         # Add title slides
         for title in json_array:
 
+            # Generate a random gradient background
+            background_gradient_clip = self.generate_gradient_background(video_width, video_height, slide_duration)
+
             # Create text clip with the title
             title_clip = mp.TextClip(title, fontsize=50, color='white', size=(video_width, video_height), font="DejaVu-Sans", method='caption')
 
@@ -64,7 +83,7 @@ class MakeShortFormVideoTool(BaseTool):
             title_clip = title_clip.set_duration(slide_duration)
 
             # Overlay the title on the background image
-            slide_clip = mp.CompositeVideoClip([title_clip])
+            slide_clip = mp.CompositeVideoClip([background_gradient_clip, title_clip])
             slide_clip.crossfadein(padding)
             clips.append(slide_clip)
 
@@ -84,4 +103,4 @@ class MakeShortFormVideoTool(BaseTool):
         output_filename = 'title_slides_video.mp4'
 
         # Write the video to a file
-        final_clip.write_videofile(output_filename, codec='libx264', fps=24)
+        final_clip.write_videofile(output_filename, codec='libx264', fps=30)

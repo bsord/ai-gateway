@@ -2,4 +2,4 @@ fastapi==0.95.0
 uvicorn==0.21.1
 openai==0.27.2
 langchain==0.0.166
-moviepy==1.0.3
+moviepy==2.0.0.dev2
